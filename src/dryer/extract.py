@@ -88,6 +88,18 @@ def _java_nodes(data: bytes, root) -> list:
     return found
 
 
+def _csharp_nodes(data: bytes, root) -> list:
+    """Methods with a block or an `=>` body; local functions and lambdas stay inside."""
+
+    found = []
+    for node in descendants(root):
+        if node.type != "method_declaration":
+            continue
+        if _has(node, "block", "arrow_expression_clause"):
+            found.append(node)
+    return found
+
+
 def _go_nodes(data: bytes, root) -> list:
     found = []
     for node in descendants(root):
@@ -149,6 +161,7 @@ _PICKERS = {
     "python": ("python", _python_nodes),
     "typescript": (_grammar, _typescript_nodes),
     "rust": ("rust", _rust_nodes),
+    "csharp": ("csharp", _csharp_nodes),
 }
 
 

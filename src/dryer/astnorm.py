@@ -117,6 +117,7 @@ _CALLS = {
     "call",
     "call_expression",
     "method_invocation",
+    "invocation_expression",
     "object_creation_expression",
     "new_expression",
 }
@@ -127,6 +128,7 @@ _ATTRIBUTES = {
     "selector_expression",
     "field_access",
     "field_expression",
+    "member_access_expression",
 }
 
 _SCOPED = {

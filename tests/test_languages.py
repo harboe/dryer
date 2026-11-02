@@ -37,6 +37,24 @@ class Right {
 }
 """
 
+CS_LEFT = """\
+class Left {
+  int Alpha(int[] xs) {
+    var ys = Filter(xs, Odd);
+    return ys.Select(Inc).Count();
+  }
+}
+"""
+
+CS_RIGHT = """\
+class Right {
+  int Beta(int[] items) {
+    var kept = Filter(items, Even);
+    return kept.Select(Dec).Count();
+  }
+}
+"""
+
 GO_LEFT = """\
 package demo
 
@@ -126,6 +144,8 @@ def test_each_language_matches_renamed_locals(tmp_path):
         "right.tsx": TSX_RIGHT,
         "left.rs": RUST_LEFT,
         "right.rs": RUST_RIGHT,
+        "left.cs": CS_LEFT,
+        "right.cs": CS_RIGHT,
     }
     for name, source in samples.items():
         write_source(tmp_path, name, source)
@@ -133,7 +153,7 @@ def test_each_language_matches_renamed_locals(tmp_path):
     by_language = {}
     for item in found:
         by_language.setdefault(item.language, []).append(item)
-    assert set(by_language) == {"java", "go", "python", "typescript", "rust"}
+    assert set(by_language) == {"java", "go", "python", "typescript", "rust", "csharp"}
     assert [(item.left.file, item.right.file) for item in by_language["typescript"]] == [
         ("left.ts", "right.ts"),
         ("left.tsx", "right.tsx"),
@@ -427,6 +447,40 @@ abstract class Left {
 """,
         "a.java",
     ) == [(3, 10)]
+
+
+def test_csharp_keeps_methods_with_a_body():
+    assert spans(
+        "csharp",
+        """\
+abstract class Left {
+  abstract int Declared(int[] xs);
+  Left() { Run(); }
+  int Alpha(int[] xs) {
+    int Inner(int[] ys) {
+      return ys.Length;
+    }
+    return Inner(xs);
+  }
+  int Beta(int[] xs) => xs.Length;
+}
+interface IRight {
+  int Gamma();
+}
+""",
+        "a.cs",
+    ) == [(4, 9), (10, 10)]
+
+
+def test_csharp_callee_name_stays(tmp_path):
+    write_source(tmp_path, "a.cs", "class A {\n  int F(int[] xs) {\n    return xs.Select(Inc).Count();\n  }\n}\n")
+    write_source(tmp_path, "b.cs", "class B {\n  int G(int[] xs) {\n    return xs.Where(Inc).Count();\n  }\n}\n")
+    files = sorted(tmp_path.glob("*.cs"))
+    entries, warnings = scan_files(files, tmp_path, min_lines=1, min_nodes=1)
+    assert warnings == []
+    found = find_duplicates(entries, threshold=0.0)
+    assert len(found) == 1
+    assert found[0].score < 1.0
 
 
 def test_a_go_function_needs_a_body():

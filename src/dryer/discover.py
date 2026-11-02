@@ -20,6 +20,7 @@ EXTENSIONS = {
     ".mts": "typescript",
     ".cts": "typescript",
     ".rs": "rust",
+    ".cs": "csharp",
     ".py": "python",
 }
 
